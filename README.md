@@ -5,7 +5,7 @@
 <div style="display: inline-block;">
   <img src="test01.png" alt="预览图" style="width:30%; margin-right: 15px;"/>
   <img src="test02.png" alt="预览图" style="width:30%; margin-right: 15px;"/>
-  <img src="test02.png" alt="预览图" style="width:30%;"/>
+  <img src="test03.png" alt="预览图" style="width:30%;"/>
 </div>
 
 ---
