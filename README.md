@@ -2,8 +2,8 @@
 
 一个使用 **Flutter** 开源框架编写的事件清单程序。支持中文输入，添加、删除、标记任务状态，记录任务创建时间，并实现本地保存。
 
-<img src="test01.png" alt="预览图" style="width:50%;"/>
-<img src="test02.png" alt="预览图" style="width:50%"/>
+<img src="test01.png" alt="预览图" style="height:50%;"/>
+<img src="test02.png" alt="预览图" style="height:50%"/>
 
 ---
 
