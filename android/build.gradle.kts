@@ -1,5 +1,6 @@
 allprojects {
     repositories {
+        maven { setUrl("https://maven.aliyun.com/repository/google") }
         google()
         mavenCentral()
     }

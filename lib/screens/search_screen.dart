@@ -101,9 +101,15 @@ class _SearchScreenState extends State<SearchScreen> {
                         },
                       )
                     : null,
-                border: OutlineInputBorder(
+                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
+                  borderSide:
+                      BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
                 ),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                        color: Theme.of(context).primaryColor, width: 2.0)),
                 filled: true,
                 fillColor: Theme.of(context).cardColor,
               ),
@@ -125,6 +131,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     onTap: () => _selectTag(null),
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
+                      alignment: Alignment.center,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
@@ -135,7 +142,11 @@ class _SearchScreenState extends State<SearchScreen> {
                                 : Colors.grey[200],
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Text('全部标签'),
+                      child: const Text(
+                        '全部',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ),
@@ -234,16 +245,46 @@ class _SearchScreenState extends State<SearchScreen> {
                               Navigator.pop(context, true);
                             }
                           },
-                          onDelete: () {
-                            final taskIndex = widget.tasks.indexWhere(
-                                (task) => task == _searchResults[index]);
-                            if (taskIndex != -1) {
-                              setState(() {
-                                _searchResults.removeAt(index);
-                              });
-                              // 通知父组件删除任务
-                              Navigator.pop(context,
-                                  {'delete': true, 'index': taskIndex});
+                          onDelete: () async {
+                            final navigator =
+                                Navigator.of(context); // 在 await 之前捕获 Navigator
+                            final taskToDelete = _searchResults[index];
+                            final confirmed = await showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('删除任务'),
+                                    content: Text(
+                                        '你确定要删除任务“${_searchResults[index].title}”吗？\n此操作无法撤销哦！'),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(false),
+                                          child: const Text('取消')),
+                                      TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(true),
+                                          child: const Text(
+                                            '删除',
+                                            style: TextStyle(color: Colors.red),
+                                          )),
+                                    ],
+                                  );
+                                });
+                            if (!mounted) return;
+                            if (confirmed == true) {
+                              final taskIndex = widget.tasks.indexWhere(
+                                  (task) => task == _searchResults[index]);
+                              if (taskIndex == -1) {
+                                setState(() {
+                                  _searchResults.remove(taskToDelete);
+                                });
+                                navigator
+                                    .pop({'delete': true, 'index': taskIndex});
+                              }
                             }
                           },
                         ),

@@ -34,8 +34,9 @@ void main() async {
 
     // 注册后台通知处理程序
     AwesomeNotifications().setListeners(
-      onActionReceivedMethod: NotificationManager.onActionReceivedMethod,
-      onNotificationCreatedMethod: null,
+      onActionReceivedMethod:
+          NotificationManager.onActionReceivedMethod, // 处理通知点击事件
+      onNotificationCreatedMethod: null, // 如果不需要，可以设置为null
       onNotificationDisplayedMethod: null,
       onDismissActionReceivedMethod: null,
     );
@@ -73,10 +74,12 @@ void main() async {
       // 启动应用程序
       runApp(
         MultiProvider(
+          // 使用 MultiProvider 来管理多个 Provider
           providers: [
             ChangeNotifierProvider(create: (_) => themeManager),
             ChangeNotifierProvider(create: (_) => tagManager),
-            ChangeNotifierProvider(create: (_) => notificationManager),
+            ChangeNotifierProvider.value(
+                value: notificationManager), // 调用已创建的实例
           ],
           child: const TodoJournalApp(),
         ),

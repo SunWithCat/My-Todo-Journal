@@ -13,12 +13,13 @@ import 'dart:convert'; // 导入dart:convert库，用于JSON编码和解码
 import 'package:shared_preferences/shared_preferences.dart'; // 导入shared_preferences库，用于本地存储数据
 
 // 任务筛选类型枚举
+// 让枚举值顺序与底部导航栏项目顺序一致
 enum TaskFilterType {
-  all, // 全部任务
-  active, // 未完成任务
-  completed, // 已完成任务
-  overdue, // 已过期任务（未完成且过期）
-  byTag, // 按标签分组
+  all, // 索引 0: 全部任务
+  active, // 索引 1: 未完成任务
+  completed, // 索引 2: 已完成任务
+  overdue, // 索引 3: 已过期任务
+  byTag, // 索引 4: 按标签分组
 }
 
 // 任务排序类型枚举
@@ -116,8 +117,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Provider.of<NotificationManager>(context, listen: false);
         notificationManager.cancelNotification(_tasks[index].notificationId!);
       }
+      _saveTasks();
     });
-    _saveTasks();
   }
 
   void _deleteTask(int index) {
@@ -132,8 +133,8 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       // 用 setState 告诉 Flutter : 我要刷新界面
       _tasks.removeAt(index);
+      _saveTasks();
     });
-    _saveTasks();
   }
 
   void _openAddDialog() {
@@ -291,6 +292,32 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // 显示删除确认对话框的方法
+  Future<bool?> _showDeleteConfirmDialog(Task task) {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('删除任务'),
+            content: Text('你确定要删除任务“${task.title}”吗？\n此操作无法撤销哦！'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('取消')),
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text(
+                    '删除',
+                    style: TextStyle(color: Colors.red),
+                  )),
+            ],
+          );
+        });
+  }
+
   @override //
   Widget build(BuildContext context) {
     // 获取主题管理器和当前主题
@@ -321,7 +348,7 @@ class _HomeScreenState extends State<HomeScreen> {
           PopupMenuButton<TaskSortType>(
             tooltip: '排序方式',
             icon: const Icon(Icons.sort),
-            onSelected: _changeSort,
+            onSelected: _changeSort, // 点击后触发
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: TaskSortType.creationDate,
@@ -389,7 +416,9 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor:
             Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
-        currentIndex: _currentFilter.index,
+        // 当前选中项的索引值
+        currentIndex: _currentFilter.index, // 使用枚举的 index 值（0-4）
+        // 当点击底部导航栏项目时，将对应的索引值转换为 TaskFilterType
         onTap: (index) => _changeFilter(TaskFilterType.values[index]),
         items: const [
           BottomNavigationBarItem(
@@ -434,6 +463,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Padding(
                         padding: const EdgeInsets.only(right: 8.0, top: 8.0),
                         child: InkWell(
+                          // 点击时触发
                           onTap: () => _selectTag(null),
                           borderRadius: BorderRadius.circular(16),
                           child: Container(
@@ -533,14 +563,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       : ListView.builder(
                           padding: const EdgeInsets.all(16),
                           itemCount: filteredTasks.length,
-                          itemBuilder: (context, index) => TaskCard(
-                            task: filteredTasks[index],
-                            onToggle: () => _toggleTask(
-                                _tasks.indexOf(filteredTasks[index])),
-                            onDelete: () => _deleteTask(
-                                _tasks.indexOf(filteredTasks[index])),
-                          ),
-                        ),
+                          addRepaintBoundaries: false, // 禁用 RepaintBoundaries
+                          itemBuilder: (context, index) {
+                            final task = filteredTasks[index];
+                            return TaskCard(
+                                task: task,
+                                onToggle: () =>
+                                    _toggleTask(_tasks.indexOf(task)),
+                                onDelete: () async {
+                                  final bool? confirmed =
+                                      await _showDeleteConfirmDialog(task);
+                                  if (confirmed == true) {
+                                    _deleteTask(_tasks.indexOf(task));
+                                  }
+                                });
+                          }),
                 ),
               ],
             )
@@ -575,8 +612,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     task: filteredTasks[index],
                     onToggle: () =>
                         _toggleTask(_tasks.indexOf(filteredTasks[index])),
-                    onDelete: () =>
-                        _deleteTask(_tasks.indexOf(filteredTasks[index])),
+                    onDelete: () async {
+                      final bool? confirmed =
+                          await _showDeleteConfirmDialog(filteredTasks[index]);
+                      if (confirmed == true) {
+                        _deleteTask(_tasks.indexOf(filteredTasks[index]));
+                      }
+                    },
                   ),
                 ),
     );
